@@ -67,6 +67,7 @@ func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
 			Name:     v.Nazwa,
 			Parts:    append(append([]string{}, parent.Parts...), v.Nazwa),
 			Parent:   parent,
+			ParentID: parent.ID,
 			Children: nil,
 		}
 		parent.Children = append(parent.Children, loc)
