@@ -11,10 +11,8 @@ require (
 	github.com/dgryski/trifles v0.0.0-20200830180326-aaf60a07f6a3
 	github.com/docker/docker v1.13.1 // indirect
 	github.com/ericlagergren/decimal v0.0.0-20191206042408-88212e6cfca9 // indirect
-	github.com/golangci/golangci-lint v1.31.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/kse/levenshtein v0.0.0-20140724095744-97d6a7b4a492
 	github.com/m1ome/leven v0.0.0-20170305195354-a3732db01c54
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/orian/counters v0.0.0-20171031171931-65f79717c6d1
