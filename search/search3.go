@@ -84,10 +84,3 @@ func (s *SearchV3) Search(text string, limit int) []*SearchResult {
 
 	return ret
 }
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
