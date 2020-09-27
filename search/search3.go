@@ -36,45 +36,41 @@ func NewSearchV3(localities []*teryt.Location, parallelism int) *SearchV3 {
 	return &SearchV3{nodes, chunks, parallelism}
 }
 
-func (s *SearchV3) search(idx int, wg *sync.WaitGroup, text string, limit int, result chan<- *LocationWrapper) {
-	defer wg.Done()
-	textRune := []rune(strings.ToLower(strings.TrimSpace(text)))
+func (s *SearchV3) search(idx int, wg *sync.WaitGroup, text []rune, limit int, result []*LocationWrapper) {
 	maxScore := 100000
 	h := &Heap{}
-	for i, v := range s.chunks[idx] {
-		v.Score = LevenshteinRune(v.SearchText, textRune)
-		if i < limit {
-			heap.Push(h, v)
-			maxScore = v.Score
-		} else if v.Score < maxScore {
+	for _, v := range s.chunks[idx][:limit] {
+		v.Score = LevenshteinRune(v.SearchText, text)
+		heap.Push(h, v)
+		maxScore = max(maxScore, v.Score)
+	}
+	for _, v := range s.chunks[idx][limit:] {
+		v.Score = LevenshteinRune(v.SearchText, text)
+		if v.Score <= maxScore {
 			heap.Push(h, v)
 			maxScore = heap.Pop(h).(*LocationWrapper).Score
 		}
 	}
-	for _, v := range *h {
-		result <- v
+	for i, v := range *h {
+		result[i] = v
 	}
+	wg.Done()
 }
 
 func (s *SearchV3) Search(text string, limit int) []*SearchResult {
 	wg := &sync.WaitGroup{}
-	result := make(chan *LocationWrapper, 10)
+	result := make([]*LocationWrapper, limit*s.parallelism)
+	textRune := []rune(strings.ToLower(strings.TrimSpace(text)))
 	for i := 0; i < s.parallelism; i++ {
 		wg.Add(1)
-		go s.search(i, wg, text, limit, result)
+		go s.search(i, wg, textRune, limit, result[i*limit:(i+1)*limit])
 	}
-	go func() {
-		wg.Wait()
-		close(result)
-	}()
-
-	h := &ReverseHeap{}
-	for v := range result {
-		heap.Push(h, v)
-	}
+	wg.Wait()
+	h := Heap(result)
+	heap.Init(&h)
 	ret := make([]*SearchResult, 0, limit)
 	for i := 0; i < limit; i++ {
-		v := heap.Pop(h).(*LocationWrapper)
+		v := heap.Pop(&h).(*LocationWrapper)
 		ret = append(ret, &SearchResult{
 			Location: v.Location,
 			Score:    v.Score,
@@ -82,4 +78,11 @@ func (s *SearchV3) Search(text string, limit int) []*SearchResult {
 	}
 
 	return ret
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
