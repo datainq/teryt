@@ -40,14 +40,15 @@ func NewSearchV3(localities []*teryt.Location, parallelism int) *SearchV3 {
 }
 
 func (s *SearchV3) search(idx int, wg *sync.WaitGroup, text []rune, limit int, result []*LocationWrapper) {
-	maxScore := 100000
+	maxScore := 10000000
 	h := &Heap{}
 	l := s.levens[idx]
 	for _, v := range s.chunks[idx][:limit] {
 		v.Score = l.LevenshteinRune(v.SearchText, text)
-		heap.Push(h, v)
-		maxScore = max(maxScore, v.Score)
+		*h = append(*h, v)
+		maxScore = min(maxScore, v.Score)
 	}
+	heap.Init(h)
 	for _, v := range s.chunks[idx][limit:] {
 		v.Score = l.LevenshteinRune(v.SearchText, text)
 		if v.Score <= maxScore {

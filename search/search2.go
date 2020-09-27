@@ -101,7 +101,7 @@ func (l *Levenshteiner) LevenshteinRune(str1, str2 []rune) int {
 		l.buffer = column
 	}
 
-	for i := 1; i <= s1len; i++ {
+	for i := 0; i <= s1len; i++ {
 		column[i] = uint16(i)
 	}
 	var lastkey, oldkey uint16
@@ -112,7 +112,7 @@ func (l *Levenshteiner) LevenshteinRune(str1, str2 []rune) int {
 		for y = 1; y <= s1len; y++ {
 			oldkey = column[y-1]
 			if str1[y-1] != str2[x-1] {
-				oldkey = min(min(column[y-1]+1, column[y]+1), lastkey+1)
+				oldkey = minUI16(minUI16(column[y-1]+1, column[y]+1), lastkey+1)
 			}
 
 			column[y-1] = lastkey
@@ -145,7 +145,7 @@ func LevenshteinRune(str1, str2 []rune) int {
 		for y = 1; y <= s1len; y++ {
 			oldkey = column[y-1]
 			if str1[y-1] != str2[x-1] {
-				oldkey = min(min(column[y-1]+1, column[y]+1), lastkey+1)
+				oldkey = minUI16(minUI16(column[y-1]+1, column[y]+1), lastkey+1)
 			}
 
 			column[y-1] = lastkey
@@ -156,7 +156,14 @@ func LevenshteinRune(str1, str2 []rune) int {
 	return int(column[s1len])
 }
 
-func min(a, b uint16) uint16 {
+func minUI16(a, b uint16) uint16 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func min(a, b int) int {
 	if a < b {
 		return a
 	}

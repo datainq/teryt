@@ -59,28 +59,28 @@ goos: linux
 goarch: amd64
 pkg: github.com/datainq/teryt/search
 BenchmarkSearch_SearchOld
-BenchmarkSearch_SearchOld-8   	     175	  36199622 ns/op	 1804094 B/op	  114175 allocs/op
+BenchmarkSearch_SearchOld-8   	     172	  34626860 ns/op	 1804163 B/op	  114175 allocs/op
 BenchmarkSearch_Search
-BenchmarkSearch_Search-8      	     735	   7856762 ns/op	  922430 B/op	   57257 allocs/op
+BenchmarkSearch_Search-8      	     770	   7788946 ns/op	  923129 B/op	   57257 allocs/op
 BenchmarkSearch_SearchV3
 BenchmarkSearch_SearchV3/parallel-1
-BenchmarkSearch_SearchV3/parallel-1-8         	     894	   6758709 ns/op	     690 B/op	      22 allocs/op
+BenchmarkSearch_SearchV3/parallel-1-8         	     901	   6752492 ns/op	     690 B/op	      22 allocs/op
 BenchmarkSearch_SearchV3/parallel-2
-BenchmarkSearch_SearchV3/parallel-2-8         	    1705	   3525269 ns/op	    1060 B/op	      28 allocs/op
+BenchmarkSearch_SearchV3/parallel-2-8         	    1743	   3525559 ns/op	    1055 B/op	      28 allocs/op
 BenchmarkSearch_SearchV3/parallel-3
-BenchmarkSearch_SearchV3/parallel-3-8         	    2473	   2557784 ns/op	    1414 B/op	      34 allocs/op
+BenchmarkSearch_SearchV3/parallel-3-8         	    2450	   2430533 ns/op	    1412 B/op	      34 allocs/op
 BenchmarkSearch_SearchV3/parallel-4
-BenchmarkSearch_SearchV3/parallel-4-8         	    2556	   2250175 ns/op	    1780 B/op	      40 allocs/op
+BenchmarkSearch_SearchV3/parallel-4-8         	    3187	   2001791 ns/op	    1778 B/op	      40 allocs/op
 BenchmarkSearch_SearchV3/parallel-5
-BenchmarkSearch_SearchV3/parallel-5-8         	    2367	   2489506 ns/op	    2154 B/op	      46 allocs/op
+BenchmarkSearch_SearchV3/parallel-5-8         	    2359	   2427669 ns/op	    2154 B/op	      46 allocs/op
 BenchmarkSearch_SearchV3/parallel-6
-BenchmarkSearch_SearchV3/parallel-6-8         	    2650	   2112240 ns/op	    2500 B/op	      52 allocs/op
+BenchmarkSearch_SearchV3/parallel-6-8         	    2626	   2103522 ns/op	    2491 B/op	      52 allocs/op
 BenchmarkSearch_SearchV3/parallel-7
-BenchmarkSearch_SearchV3/parallel-7-8         	    2947	   1834934 ns/op	    2869 B/op	      58 allocs/op
+BenchmarkSearch_SearchV3/parallel-7-8         	    2953	   1835657 ns/op	    2869 B/op	      58 allocs/op
 BenchmarkSearch_SearchV3/parallel-8
-BenchmarkSearch_SearchV3/parallel-8-8         	    3148	   1682161 ns/op	    3211 B/op	      64 allocs/op
+BenchmarkSearch_SearchV3/parallel-8-8         	    3070	   1693271 ns/op	    3211 B/op	      64 allocs/op
 PASS
-ok  	github.com/datainq/teryt/search	75.862s
+ok  	github.com/datainq/teryt/search	84.667s
 ```
 
 ## Benchmark of levenstein function
