@@ -93,14 +93,15 @@ func BenchmarkAll(b *testing.B) {
 	}{
 		// ASCII
 		{"LevenshteinRune", "frankenstein", "ASCII"},
+		{"ŁÓźęĄ ŚŹła", "Żółć ąęŹÓń", "Polish"},
 		// Testing acutes and umlauts
 		{"resumé and café", "resumés and cafés", "French"},
 		{"Hafþór Júlíus Björnsson", "Hafþor Julius Bjornsson", "Nordic"},
 		// Only 2 characters are less in the 2nd string
 		{"།་གམ་འས་པ་་མ།", "།་གམའས་པ་་མ", "Tibetan"},
-		{"ŁÓźęĄ ŚŹła", "Żółć ąęŹÓń", "Polish"},
 	}
 	tmp := 0
+	b.ReportAllocs()
 	for _, test := range tests {
 		b.Run(test.name, func(b *testing.B) {
 			b.Run("agniva", func(b *testing.B) {
@@ -126,6 +127,13 @@ func BenchmarkAll(b *testing.B) {
 			b.Run("datainq", func(b *testing.B) {
 				for n := 0; n < b.N; n++ {
 					tmp = LevenshteinRune([]rune(test.a), []rune(test.b))
+				}
+			})
+			b.Run("datainq2", func(b *testing.B) {
+				l := &Levenshteiner{}
+				b.ResetTimer()
+				for n := 0; n < b.N; n++ {
+					tmp = l.LevenshteinRune([]rune(test.a), []rune(test.b))
 				}
 			})
 			// b.Run("datainq2", func(b *testing.B) {

@@ -10,6 +10,7 @@ import (
 
 type SearchV3 struct {
 	nodes       []*LocationWrapper
+	levens      []*Levenshteiner
 	chunks      [][]*LocationWrapper
 	parallelism int
 }
@@ -25,6 +26,7 @@ func NewSearchV3(localities []*teryt.Location, parallelism int) *SearchV3 {
 	}
 
 	var chunks [][]*LocationWrapper
+	var levens []*Levenshteiner
 	for i := 0; i < parallelism; i++ {
 		start := i * len(nodes) / parallelism
 		end := (i + 1) * len(nodes) / parallelism
@@ -32,20 +34,22 @@ func NewSearchV3(localities []*teryt.Location, parallelism int) *SearchV3 {
 			end = len(nodes)
 		}
 		chunks = append(chunks, nodes[start:end])
+		levens = append(levens, &Levenshteiner{})
 	}
-	return &SearchV3{nodes, chunks, parallelism}
+	return &SearchV3{nodes, levens, chunks, parallelism}
 }
 
 func (s *SearchV3) search(idx int, wg *sync.WaitGroup, text []rune, limit int, result []*LocationWrapper) {
 	maxScore := 100000
 	h := &Heap{}
+	l := s.levens[idx]
 	for _, v := range s.chunks[idx][:limit] {
-		v.Score = LevenshteinRune(v.SearchText, text)
+		v.Score = l.LevenshteinRune(v.SearchText, text)
 		heap.Push(h, v)
 		maxScore = max(maxScore, v.Score)
 	}
 	for _, v := range s.chunks[idx][limit:] {
-		v.Score = LevenshteinRune(v.SearchText, text)
+		v.Score = l.LevenshteinRune(v.SearchText, text)
 		if v.Score <= maxScore {
 			heap.Push(h, v)
 			maxScore = heap.Pop(h).(*LocationWrapper).Score

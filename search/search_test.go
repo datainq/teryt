@@ -33,6 +33,7 @@ func BenchmarkSearch_SearchOld(b *testing.B) {
 		"Olsztyn", "Ełk", "Elbląg", "Giżycko", "Wrocław", "Berlin", "Reszel",
 		"Kętrzyn", "Olsztynek", "Rzeszów", "Łódź", "Pupki", "Jonkowo", "Warkały",
 	}
+	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		val := s.Search(names[i%len(names)], 10)
@@ -46,6 +47,7 @@ func BenchmarkSearch_Search(b *testing.B) {
 		"Olsztyn", "Ełk", "Elbląg", "Giżycko", "Wrocław", "Berlin", "Reszel",
 		"Kętrzyn", "Olsztynek", "Rzeszów", "Łódź", "Pupki", "Jonkowo", "Warkały",
 	}
+	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		val := s.Search(names[i%len(names)], 10)
@@ -61,6 +63,7 @@ func BenchmarkSearch_SearchV3(b *testing.B) {
 	for i := 1; i < 9; i++ {
 		b.Run(fmt.Sprintf("parallel-%d", i), func(b *testing.B) {
 			s := NewSearchV3(mustLoadNodes(b), i)
+			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				val := s.Search(names[i%len(names)], 10)

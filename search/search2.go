@@ -85,6 +85,44 @@ func LevenshteinStr(str1, str2 string) int {
 	return column[s1Len]
 }
 
+type Levenshteiner struct {
+	buffer []uint16
+}
+
+func (l *Levenshteiner) LevenshteinRune(str1, str2 []rune) int {
+	if len(str1) > len(str2) {
+		str1, str2 = str2, str1
+	}
+	s1len := len(str1)
+	s2len := len(str2)
+	column := l.buffer
+	if s1len >= len(column) {
+		column = make([]uint16, s1len+1)
+		l.buffer = column
+	}
+
+	for i := 1; i <= s1len; i++ {
+		column[i] = uint16(i)
+	}
+	var lastkey, oldkey uint16
+	_ = column[s1len]
+	var y int
+	for x := 1; x <= s2len; x++ {
+		lastkey = uint16(x)
+		for y = 1; y <= s1len; y++ {
+			oldkey = column[y-1]
+			if str1[y-1] != str2[x-1] {
+				oldkey = min(min(column[y-1]+1, column[y]+1), lastkey+1)
+			}
+
+			column[y-1] = lastkey
+			lastkey = oldkey
+		}
+		column[s1len] = lastkey
+	}
+	return int(column[s1len])
+}
+
 // LevenshteinRune impelments levenstein distance.
 // Optimizations taken from:
 // https://github.com/agnivade/levenshtein/blob/master/levenshtein.go
