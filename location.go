@@ -6,7 +6,6 @@ import (
 )
 
 type Location struct {
-	Score    int
 	ID       string
 	Type     string
 	Name     string
@@ -105,11 +104,9 @@ func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
 			}
 			var parent *Location
 			if v.Sym != v.SymPod {
-				parent = simBySym[v.SymPod]
 				continue
-			} else {
-				parent = communeByKey[key]
 			}
+			parent = communeByKey[key]
 			if parent == nil {
 				return nil, fmt.Errorf("cannot find parent! %s != %s", v.Sym, v.SymPod)
 			}
@@ -125,5 +122,5 @@ func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
 			simBySym[v.Sym] = loc
 		}
 	}
-	return root,nil
+	return root, nil
 }

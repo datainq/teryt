@@ -23,6 +23,7 @@ package main
 import (
 	"archive/zip"
 	"bufio"
+	"container/heap"
 	"flag"
 	"fmt"
 	"io"
@@ -62,10 +63,9 @@ func main() {
 
 	searchNodes := enlistLocations(root, teryt.Config{Separator: " "})
 	counters.Get("search:nodes").IncrementBy(len(searchNodes))
-	runSearch(searchNodes)
+	runSearch(searchNodes, 10)
 	// fmt.Printf("number of nodes: %d\n", printNodes(root))
 }
-
 
 func Open(filePath string) (io.ReadCloser, error) {
 	var dataReader io.ReadCloser
@@ -121,7 +121,7 @@ func enlistLocations(root *teryt.Location, cfg teryt.Config) []*teryt.Location {
 		root.Build(cfg)
 		ret = append(ret, root)
 	}
-	if len(root.Children) >1 {
+	if len(root.Children) > 1 {
 		for _, v := range root.Children {
 			ret = append(ret, enlistLocations(v, cfg)...)
 		}
@@ -129,53 +129,79 @@ func enlistLocations(root *teryt.Location, cfg teryt.Config) []*teryt.Location {
 	return ret
 }
 
-func printNodes(loc *teryt.Location) int {
-	for i, p := range loc.Parts {
-		if i > 0 {
-			fmt.Fprint(os.Stdout, ", ")
-		}
-		fmt.Fprint(os.Stdout, p)
-	}
-	fmt.Println()
-	n := 1
-	for _, v := range loc.Children {
-		n += printNodes(v)
-	}
-	return n
+type LocationWrapper struct {
+	*teryt.Location
+	Score      int
+	SearchText []rune
 }
 
-func runSearch(localities []*teryt.Location) {
+type Heap []*LocationWrapper
+
+func (h Heap) Len() int {
+	return len(h)
+}
+
+func (h Heap) Less(i, j int) bool {
+	a, b := h[i], h[j]
+	return a.Score > b.Score || a.Score == b.Score && (len(a.Parts) > len(b.Parts))
+}
+
+func (h Heap) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
+}
+
+func (h *Heap) Push(x interface{}) {
+	*h = append(*h, x.(*LocationWrapper))
+}
+
+func (h *Heap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	item := old[n-1]
+	old[n-1] = nil // avoid memory leak
+	*h = old[0 : n-1]
+	return item
+}
+
+func runSearch(localities []*teryt.Location, maxResults int) {
 	fmt.Print(">")
 	scanner := bufio.NewScanner(os.Stdin)
+
+	var nodes []*LocationWrapper
+	for _, l := range localities {
+		nodes = append(nodes, &LocationWrapper{
+			Location:   l,
+			Score:      0,
+			SearchText: []rune(strings.ToLower(l.Parts[len(l.Parts)-1])),
+		})
+	}
+
 	for scanner.Scan() {
 		t := time.Now()
 		text := strings.ToLower(strings.TrimSpace(scanner.Text()))
 		fmt.Printf("search for %q\n", text)
-		for _, v := range localities {
-			v.Score = levenshtein([]rune(strings.ToLower(v.Parts[len(v.Parts)-1])), []rune(text))
+		textRune := []rune(text)
+		maxScore := 100000
+		h := &Heap{}
+		for i, v := range nodes {
+			v.Score = levenshtein(v.SearchText, textRune)
+			if i < maxResults {
+				heap.Push(h, v)
+				maxScore = v.Score
+			} else if v.Score < maxScore {
+				heap.Push(h, v)
+				maxScore = heap.Pop(h).(*LocationWrapper).Score
+			}
 		}
-		sort.Slice(localities, func(i, j int) bool {
-			a, b := localities[i], localities[j]
-			return a.Score < b.Score || a.Score == b.Score && (len(a.Parts) < len(b.Parts))
-		})
-		locs := localities
-		if len(locs) > 10 {
-			locs = locs[:10]
-		}
-		fmt.Printf("Results: (%s)\n", time.Now().Sub(t))
+		locs := *h
+		sort.Sort(sort.Reverse(locs))
+
+		fmt.Printf("Results: (%s)\n", time.Since(t))
 		for idx, v := range locs {
 			fmt.Printf("%d. dist %d: %v (%s)\n", idx, v.Score, v.FullName, v.Type)
 		}
 		fmt.Print(">")
 	}
-}
-
-func Dist(v *teryt.Location, text string) int {
-	// a := 3 * levenshtein([]rune(strings.ToLower(v.VoivodeshipName)), []rune(text))
-	b := 15*levenshtein([]rune(strings.ToLower(v.Parts[0])), []rune(text)) + 2
-	c := 10*levenshtein([]rune(strings.ToLower(v.Parts[1])), []rune(text)) + 1
-	d := 5 * levenshtein([]rune(strings.ToLower(v.Parts[2])), []rune(text))
-	return minimum3(b, c, d)
 }
 
 func levenshtein(str1, str2 []rune) int {

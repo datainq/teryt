@@ -1,6 +1,5 @@
 package teryt
 
-
 type RodzGmi int
 
 var (
@@ -94,4 +93,3 @@ func (r RodzMiejscowosci) Name() string {
 	}
 	return ""
 }
-
