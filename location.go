@@ -93,6 +93,7 @@ func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
 		if ok {
 			loc.Parts = append(append([]string{}, parent.Parts...), v.Nazwa)
 			loc.Parent = parent
+			loc.ParentID = parent.ID
 			parent.Children = append(parent.Children, loc)
 		} else if v.Sym != v.SymPod {
 			loc.ParentID = key.symbol
