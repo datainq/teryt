@@ -66,7 +66,7 @@ func (s *SearchV3) Search(text string, limit int) []*SearchResult {
 		go s.search(i, wg, textRune, limit, result[i*limit:(i+1)*limit])
 	}
 	wg.Wait()
-	h := Heap(result)
+	h := ReverseHeap(result)
 	heap.Init(&h)
 	ret := make([]*SearchResult, 0, limit)
 	for i := 0; i < limit; i++ {

@@ -67,9 +67,9 @@ func runSearch(localities []*teryt.Location, maxResults int) {
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Print(">")
 	for scanner.Scan() {
-		t := time.Now()
 		text := scanner.Text()
 		fmt.Printf("search for %q\n", text)
+		t := time.Now()
 		results := s.Search(text, maxResults)
 		fmt.Printf("Results: (%s)\n", time.Since(t))
 		for idx, v := range results {
