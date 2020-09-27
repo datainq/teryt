@@ -63,7 +63,7 @@ func main() {
 }
 
 func runSearch(localities []*teryt.Location, maxResults int) {
-	s := search.NewSearch(localities)
+	s := search.NewSearchV3(localities, 6)
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Print(">")
 	for scanner.Scan() {

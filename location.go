@@ -29,64 +29,46 @@ type keyType struct {
 }
 
 func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
-	voivodeshipNames := make(map[int]string)
-	countyNames := make(map[int]string)
-	communeByKey := make(map[keyType]*Location)
 	root := &Location{}
+	communeByKey := map[keyType]*Location{
+		keyType{}: root,
+	}
+	var (
+		id             string
+		parentKey, key keyType
+	)
 	for _, v := range tercData {
-		key := keyType{
+		key = keyType{
 			voivodeship: v.Woj,
 			county:      v.Pow,
 			commune:     v.Gmi,
 		}
-		if v.Pow == 0 {
-			voivodeshipNames[v.Woj] = v.Nazwa
-			loc := &Location{
-				ID:       "",
-				Type:     v.Nazdod,
-				Name:     v.Nazwa,
-				Parts:    []string{v.Nazwa},
-				Parent:   root,
-				Children: nil,
-			}
-			root.Children = append(root.Children, loc)
-			communeByKey[key] = loc
-		} else if v.Gmi == 0 {
-			countyNames[v.Pow] = v.Nazwa
 
-			parent, ok := communeByKey[keyType{voivodeship: v.Woj}]
-			if !ok {
-				panic("not found")
-			}
-			loc := &Location{
-				ID:       "",
-				Type:     v.Nazdod,
-				Name:     v.Nazwa,
-				Parts:    append(append([]string{}, parent.Parts...), v.Nazwa),
-				Parent:   parent,
-				Children: nil,
-			}
-			parent.Children = append(parent.Children, loc)
-			communeByKey[key] = loc
-		} else {
-			parent, ok := communeByKey[keyType{
-				voivodeship: v.Woj,
-				county:      v.Pow,
-			}]
-			if !ok {
-				panic("not found")
-			}
-			loc := &Location{
-				ID:       "",
-				Type:     v.Nazdod,
-				Name:     v.Nazwa,
-				Parts:    append(append([]string{}, parent.Parts...), v.Nazwa),
-				Parent:   parent,
-				Children: nil,
-			}
-			parent.Children = append(parent.Children, loc)
-			communeByKey[key] = loc
+		if v.Pow == 0 { // województwo
+			parentKey = keyType{}
+			id = fmt.Sprintf("%02d", v.Woj)
+		} else if v.Gmi == 0 { // powiat
+			parentKey = keyType{voivodeship: v.Woj}
+			id = fmt.Sprintf("%02d%02d", v.Woj, v.Pow)
+		} else { // gmina
+			parentKey = keyType{voivodeship: v.Woj, county: v.Pow}
+			id = fmt.Sprintf("%02d%02d%02d", v.Woj, v.Pow, v.Gmi)
 		}
+		parent, ok := communeByKey[parentKey]
+		id = fmt.Sprintf("%02d%02d", v.Woj, v.Pow)
+		if !ok {
+			return nil, fmt.Errorf("cannot find parent for: %s", id)
+		}
+		loc := &Location{
+			ID:       id,
+			Type:     v.Nazdod,
+			Name:     v.Nazwa,
+			Parts:    append(append([]string{}, parent.Parts...), v.Nazwa),
+			Parent:   parent,
+			Children: nil,
+		}
+		parent.Children = append(parent.Children, loc)
+		communeByKey[key] = loc
 	}
 
 	simBySym := make(map[string]*Location)
