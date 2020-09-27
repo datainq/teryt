@@ -70,7 +70,6 @@ func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
 		communeByKey[key] = loc
 	}
 
-	simBySym := make(map[string]*Location)
 	for i := 0; i < 2; i++ {
 		for _, v := range simcData {
 			if i == 0 && v.Sym != v.SymPod {
@@ -84,7 +83,7 @@ func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
 				commune:     v.Gmi,
 			}
 			var parent *Location
-			if v.Sym != v.SymPod {
+			if v.Rm != RodzMiej_Miasto && v.Rm != RodzMiej_Wies {
 				continue
 			}
 			parent = communeByKey[key]
@@ -100,7 +99,6 @@ func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
 				Children: nil,
 			}
 			parent.Children = append(parent.Children, loc)
-			simBySym[v.Sym] = loc
 		}
 	}
 	return root, nil

@@ -64,6 +64,21 @@ func GetRodzMiejscowosci(v string) int {
 	return -1
 }
 
+var (
+	RodzMiej_CzescMiejscowosci     RodzMiejscowosci = 0
+	RodzMiej_Wies                  RodzMiejscowosci = 1
+	RodzMiej_Kolonia               RodzMiejscowosci = 2
+	RodzMiej_Przysiolek            RodzMiejscowosci = 3
+	RodzMiej_Osada                 RodzMiejscowosci = 4
+	RodzMiej_OsadaLesna            RodzMiejscowosci = 5
+	RodzMiej_Osiedle               RodzMiejscowosci = 6
+	RodzMiej_SchroniskoTurystyczne RodzMiejscowosci = 7
+	RodzMiej_DzielnicaMStWarszawy  RodzMiejscowosci = 95
+	RodzMiej_Miasto                RodzMiejscowosci = 96
+	RodzMiej_Delegatura            RodzMiejscowosci = 98
+	RodzMiej_CzescMiasta           RodzMiejscowosci = 99
+)
+
 func (r RodzMiejscowosci) Name() string {
 	switch r {
 	case 0:
