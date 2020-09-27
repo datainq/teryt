@@ -26,7 +26,7 @@ func NewSearchOld(localities []*teryt.Location) *SearchOld {
 func (s *SearchOld) Search(text string, limit int) []*SearchResult {
 	text = strings.ToLower(strings.TrimSpace(text))
 	for _, v := range s.nodes {
-		v.Score = levenshtein([]rune(strings.ToLower(v.Parts[len(v.Parts)-1])), []rune(text))
+		v.Score = LevenshteinRune([]rune(strings.ToLower(v.Parts[len(v.Parts)-1])), []rune(text))
 	}
 	sort.Slice(s.nodes, func(i, j int) bool {
 		a, b := s.nodes[i], s.nodes[j]

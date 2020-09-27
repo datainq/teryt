@@ -42,7 +42,7 @@ func (s *SearchV3) search(idx int, wg *sync.WaitGroup, text string, limit int, r
 	maxScore := 100000
 	h := &Heap{}
 	for i, v := range s.chunks[idx] {
-		v.Score = levenshtein(v.SearchText, textRune)
+		v.Score = LevenshteinRune(v.SearchText, textRune)
 		if i < limit {
 			heap.Push(h, v)
 			maxScore = v.Score
@@ -81,5 +81,5 @@ func (s *SearchV3) Search(text string, limit int) []*SearchResult {
 		})
 	}
 
-	return nil
+	return ret
 }

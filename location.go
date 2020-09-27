@@ -55,7 +55,6 @@ func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
 			id = fmt.Sprintf("%02d%02d%02d", v.Woj, v.Pow, v.Gmi)
 		}
 		parent, ok := communeByKey[parentKey]
-		id = fmt.Sprintf("%02d%02d", v.Woj, v.Pow)
 		if !ok {
 			return nil, fmt.Errorf("cannot find parent for: %s", id)
 		}
