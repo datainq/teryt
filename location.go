@@ -12,6 +12,7 @@ type Location struct {
 	Parts    []string
 	FullName string
 
+	ParentID string
 	Parent   *Location
 	Children []*Location
 }
@@ -26,101 +27,92 @@ func (l *Location) Build(cfg Config) {
 
 type keyType struct {
 	voivodeship, county, commune int
+	symbol                       string
 }
 
 func BuildLocations(tercData []SetTERC, simcData []SetSIMC) (*Location, error) {
-	voivodeshipNames := make(map[int]string)
-	countyNames := make(map[int]string)
-	communeByKey := make(map[keyType]*Location)
 	root := &Location{}
+	communeByKey := map[keyType]*Location{
+		keyType{}: root,
+	}
+	var (
+		id             string
+		parentKey, key keyType
+	)
+	communeBySymbol := make(map[string]*Location)
 	for _, v := range tercData {
+		key = keyType{
+			voivodeship: v.Woj,
+			county:      v.Pow,
+			commune:     v.Gmi,
+		}
+
+		if v.Pow == 0 { // województwo
+			parentKey = keyType{}
+			id = fmt.Sprintf("terc:%02d", v.Woj)
+		} else if v.Gmi == 0 { // powiat
+			parentKey = keyType{voivodeship: v.Woj}
+			id = fmt.Sprintf("terc:%02d%02d", v.Woj, v.Pow)
+		} else { // gmina
+			parentKey = keyType{voivodeship: v.Woj, county: v.Pow}
+			id = fmt.Sprintf("terc:%02d%02d%02d", v.Woj, v.Pow, v.Gmi)
+		}
+		parent, ok := communeByKey[parentKey]
+		if !ok {
+			return nil, fmt.Errorf("cannot find parent for: %s", id)
+		}
+		loc := &Location{
+			ID:       id,
+			Type:     v.Nazdod,
+			Name:     v.Nazwa,
+			Parts:    append(append([]string{}, parent.Parts...), v.Nazwa),
+			Parent:   parent,
+			ParentID: parent.ID,
+			Children: nil,
+		}
+		parent.Children = append(parent.Children, loc)
+		communeByKey[key] = loc
+		communeBySymbol[loc.ID] = loc
+	}
+
+	for _, v := range simcData {
 		key := keyType{
 			voivodeship: v.Woj,
 			county:      v.Pow,
 			commune:     v.Gmi,
 		}
-		if v.Pow == 0 {
-			voivodeshipNames[v.Woj] = v.Nazwa
-			loc := &Location{
-				ID:       "",
-				Type:     v.Nazdod,
-				Name:     v.Nazwa,
-				Parts:    []string{v.Nazwa},
-				Parent:   root,
-				Children: nil,
-			}
-			root.Children = append(root.Children, loc)
-			communeByKey[key] = loc
-		} else if v.Gmi == 0 {
-			countyNames[v.Pow] = v.Nazwa
-
-			parent, ok := communeByKey[keyType{voivodeship: v.Woj}]
-			if !ok {
-				panic("not found")
-			}
-			loc := &Location{
-				ID:       "",
-				Type:     v.Nazdod,
-				Name:     v.Nazwa,
-				Parts:    append(append([]string{}, parent.Parts...), v.Nazwa),
-				Parent:   parent,
-				Children: nil,
-			}
-			parent.Children = append(parent.Children, loc)
-			communeByKey[key] = loc
-		} else {
-			parent, ok := communeByKey[keyType{
-				voivodeship: v.Woj,
-				county:      v.Pow,
-			}]
-			if !ok {
-				panic("not found")
-			}
-			loc := &Location{
-				ID:       "",
-				Type:     v.Nazdod,
-				Name:     v.Nazwa,
-				Parts:    append(append([]string{}, parent.Parts...), v.Nazwa),
-				Parent:   parent,
-				Children: nil,
-			}
-			parent.Children = append(parent.Children, loc)
-			communeByKey[key] = loc
+		if v.Sym != v.SymPod {
+			key.symbol = "simc:" + v.SymPod
 		}
+		parent, ok := communeByKey[key]
+		loc := &Location{
+			ID:       "simc:" + v.Sym,
+			Type:     v.Rm.Name(),
+			Name:     v.Nazwa,
+			Children: nil,
+		}
+		if ok {
+			loc.Parts = append(append([]string{}, parent.Parts...), v.Nazwa)
+			loc.Parent = parent
+			loc.ParentID = parent.ID
+			parent.Children = append(parent.Children, loc)
+		} else if v.Sym != v.SymPod {
+			loc.ParentID = key.symbol
+		}
+		key.symbol = loc.ID
+		communeBySymbol[loc.ID] = loc
 	}
-
-	simBySym := make(map[string]*Location)
-	for i := 0; i < 2; i++ {
-		for _, v := range simcData {
-			if i == 0 && v.Sym != v.SymPod {
-				continue
-			} else if i == 1 && v.Sym == v.SymPod {
-				continue
-			}
-			key := keyType{
-				voivodeship: v.Woj,
-				county:      v.Pow,
-				commune:     v.Gmi,
-			}
-			var parent *Location
-			if v.Sym != v.SymPod {
-				continue
-			}
-			parent = communeByKey[key]
-			if parent == nil {
-				return nil, fmt.Errorf("cannot find parent! %s != %s", v.Sym, v.SymPod)
-			}
-			loc := &Location{
-				ID:       v.Sym,
-				Type:     v.Rm.Name(),
-				Name:     v.Nazwa,
-				Parts:    append(append([]string{}, parent.Parts...), v.Nazwa),
-				Parent:   parent,
-				Children: nil,
-			}
-			parent.Children = append(parent.Children, loc)
-			simBySym[v.Sym] = loc
+	for _, v := range communeByKey {
+		if v.ParentID == "" || v.Parent != nil {
+			continue
 		}
+		parent, ok := communeBySymbol[v.ParentID]
+		if !ok {
+			return nil, fmt.Errorf("cannot find parent: %s", v.ParentID)
+		}
+		v.Parts = append(append([]string{}, parent.Parts...), v.Name)
+		v.Parent = parent
+		parent.Children = append(parent.Children, v)
 	}
 	return root, nil
 }

@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"github.com/datainq/teryt"
-	"github.com/datainq/teryt/search"
+	"github.com/datainq/teryt/pkg/search"
 	"github.com/datainq/teryt/utils"
 	counters "github.com/orian/counters/global"
 	"github.com/sirupsen/logrus"
@@ -41,13 +41,14 @@ func main() {
 	defer counters.WriteTo(os.Stderr)
 	counters.LogrusOnSignal()
 
-	tercFile := flag.String("terc", "", "TERC Urzędowy file")
-	simcFile := flag.String("simc", "", "SIMC Urzędowy file")
+	var tercFile, simcFile string
+	flag.StringVar(&tercFile, "terc", "", "TERC Urzędowy file")
+	flag.StringVar(&simcFile, "simc", "", "SIMC Urzędowy file")
 	flag.Parse()
 
-	log.Infof("terc: %s", *tercFile)
-	log.Infof("simc: %s", *simcFile)
-	tercData, simcData, err := utils.LoadData(*tercFile, *simcFile)
+	log.Infof("terc: %s", tercFile)
+	log.Infof("simc: %s", simcFile)
+	tercData, simcData, err := utils.LoadData(tercFile, simcFile)
 	if err != nil {
 		log.Fatalf("loading data: %s", err)
 	}
@@ -58,24 +59,26 @@ func main() {
 
 	searchNodes := utils.EnlistLocations(root, teryt.Config{Separator: " "})
 	counters.Get("search:nodes").IncrementBy(len(searchNodes))
-	runSearch(searchNodes, 10)
-	// fmt.Printf("number of nodes: %d\n", printNodes(root))
+	runSearch(10, search.NewSearchV1(searchNodes))
 }
 
-func runSearch(localities []*teryt.Location, maxResults int) {
-	s := search.NewSearch(localities)
+func printResults(results []*search.SearchResult, d time.Duration) {
+	fmt.Printf("\r\nResults: (%s)", d)
+	for idx, v := range results {
+		fmt.Printf("\r\n%d. dist %d: %v (%s)", idx, v.Score,
+			v.Location.FullName, v.Location.Type)
+	}
+}
+
+func runSearch(maxResults int, s search.Interface) {
+	fmt.Print("\n>")
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print(">")
 	for scanner.Scan() {
-		t := time.Now()
 		text := scanner.Text()
 		fmt.Printf("search for %q\n", text)
+		t := time.Now()
 		results := s.Search(text, maxResults)
-		fmt.Printf("Results: (%s)\n", time.Since(t))
-		for idx, v := range results {
-			fmt.Printf("%d. dist %d: %v (%s)\n", idx, v.Score,
-				v.Location.FullName, v.Location.Type)
-		}
-		fmt.Print(">")
+		printResults(results, time.Since(t))
+		fmt.Print("\n>")
 	}
 }
