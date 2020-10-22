@@ -27,6 +27,9 @@ func PrintLocations(loc *teryt.Location) int {
 	return n
 }
 
+// OpenFile opens a file to read. If file is *.zip it uses a unzip wrapper
+// and opens the only file or the file with the name same as zip with
+// extension replaced by .csv
 func OpenFile(filePath string) (io.ReadCloser, error) {
 	var dataReader io.ReadCloser
 	if strings.HasSuffix(filePath, ".zip") {
@@ -36,7 +39,7 @@ func OpenFile(filePath string) (io.ReadCloser, error) {
 		}
 		fileName := path.Base(filePath[:len(filePath)-4]) + ".csv"
 		for _, f := range r.File {
-			if strings.HasPrefix(f.Name, fileName) {
+			if strings.HasPrefix(f.Name, fileName) || len(r.File) == 1 {
 				dataReader, err = f.Open()
 				if err != nil {
 					_ = r.Close()
@@ -46,10 +49,9 @@ func OpenFile(filePath string) (io.ReadCloser, error) {
 			}
 		}
 		_ = r.Close()
-	} else {
-		return os.Open(filePath)
+		return nil, fmt.Errorf("file %q not found in ZIP: %q", fileName, filePath)
 	}
-	return nil, fmt.Errorf("file %q not found", filePath)
+	return os.Open(filePath)
 }
 
 func LoadData(tercFile, simcFile string) ([]teryt.SetTERC, []teryt.SetSIMC, error) {
